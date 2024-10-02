@@ -105,10 +105,6 @@ See `install.py` for a complete list of Python package requirements.
 4. Push to the branch
 5. Create a new Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## Acknowledgments
 
 - Tesseract OCR for text recognition
