@@ -10,12 +10,13 @@ import json
 import requests
 from datetime import datetime
 
-# Set the path to the Tesseract executable
+# tesseract configuration
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Adjust this path as needed
+#file reading function
 def read_context_file(context_file):
     with open(context_file, 'r', encoding='utf-8') as file:
         return file.read()
-    
+    #pdf to image converstion function
 def pdf_to_images(pdf_path, output_dir):
     doc = fitz.open(pdf_path)
     images = []
@@ -27,7 +28,7 @@ def pdf_to_images(pdf_path, output_dir):
         images.append(img_path)
     doc.close()
     return images
-
+#image preprocessing function
 def preprocess_image(image):
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -39,7 +40,7 @@ def preprocess_image(image):
     denoised = cv2.fastNlMeansDenoising(thresh, None, 10, 7, 21)
     
     return denoised
-
+#cell detection function
 def detect_cells(gray):
     _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -51,20 +52,20 @@ def detect_cells(gray):
             if w > 50 and h > 20:
                 cells.append((x, y, w, h))
     return cells
-
+#cell empty check function
 def is_cell_empty(img, x, y, w, h):
     cell = img[y:y+h, x:x+w]
     gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY)
     white_pixel_ratio = np.sum(binary == 255) / (w * h)
     return white_pixel_ratio > 0.95
-
+#field name extraction function
 def get_field_name(img, x, y, w, h):
     # Check the entire left side for the field name
     left_cell = img[y:y+h, 0:x]
     left_text = pytesseract.image_to_string(left_cell)
     return left_text.strip() if left_text.strip() else "Unknown Field"
-
+#text in box function
 def put_text_in_box(img, text, x, y, w, h, color=(0, 0, 0), font_size=38, thickness=2, align_left=False, align_top=False):
     # Convert OpenCV image to PIL Image
     pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -115,7 +116,7 @@ def put_text_in_box(img, text, x, y, w, h, color=(0, 0, 0), font_size=38, thickn
     
     # Convert back to OpenCV image
     return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-
+#ollama response function
 def get_ollama_response(prompt, context, model="llama3.2"):
     url = "http://localhost:11434/api/generate"
     
@@ -132,11 +133,11 @@ def get_ollama_response(prompt, context, model="llama3.2"):
         return json.loads(response.text)['response']
     else:
         return f"Error: {response.status_code}, {response.text}"
-
+#date addition to context function
 def add_current_date_to_context(context):
     current_date = datetime.now().strftime("%d/%m/%Y")
     return f"Current Date: {current_date}\n\n{context}"
-
+#cell detection and marking function
 def detect_and_mark_cells(image_path, output_image_path, context_file):
     context = read_context_file(context_file)
     context_with_date = add_current_date_to_context(context)
@@ -249,7 +250,7 @@ def detect_and_mark_cells(image_path, output_image_path, context_file):
     img_pil.save(pdf_path, "PDF")
     
     return img
-
+#pdf processing function
 def process_pdf(input_pdf, output_dir, context_file):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
